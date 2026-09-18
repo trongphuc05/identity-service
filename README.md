@@ -6,7 +6,7 @@ This microservice is responsible for:
 
 ## Tech stack
 * Build tool: maven >= 3.9.5
-* Java: 25
+* Java: 21
 * Framework: Spring boot 3.2.x
 * DBMS: MySQL
 
