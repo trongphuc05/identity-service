@@ -8,6 +8,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.trongphuc.identity_service.dto.request.AuthenticationRequest;
 import com.trongphuc.identity_service.dto.request.IntrospectRequest;
 import com.trongphuc.identity_service.dto.request.LogoutRequest;
+import com.trongphuc.identity_service.dto.request.RefreshRequest;
 import com.trongphuc.identity_service.dto.response.AuthenticationResponse;
 import com.trongphuc.identity_service.dto.response.IntrospectResponse;
 import com.trongphuc.identity_service.entity.InvalidatedToken;
@@ -153,6 +154,33 @@ public class AuthenticationService {
             });
 
         return stringJoiner.toString();
+    }
+
+    public AuthenticationResponse refreshToken(RefreshRequest request)
+        throws ParseException, JOSEException {
+            var signedJWT = verifyToken(request.getToken());
+
+            var jit = signedJWT.getJWTClaimsSet().getJWTID();
+            var expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+
+            InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                    .id(jit)
+                    .expiryTime(expiryTime)
+                    .build();
+
+            invalidatedTokenRepository.save(invalidatedToken);
+
+            var username = signedJWT.getJWTClaimsSet().getSubject();
+
+            var user = userRepository.findByUsername(username).orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+
+            var token = generateToken(user);
+
+            return AuthenticationResponse.builder()
+                    .token(token)
+                    .authenticated(true)
+                    .build();
+
     }
 
 }
